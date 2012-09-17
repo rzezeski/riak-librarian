@@ -3,7 +3,6 @@
 
  <fields>
    <field name="id" type="string" indexed="true" stored="true" required="true" />
-rue"/>
 
    <field name="hash" type="string" indexed="true" stored="false"/>
 
