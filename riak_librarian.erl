@@ -1,33 +1,62 @@
 -module(riak_librarian).
 -compile(export_all).
+-define(MB, 1048576).
 
 %% @doc Given an XML `File', the top-level `ElementName' and the
 %% `KeyField' create a list of key-value pairs.  The file should have
 %% the following format.
 %%
 %% <ElementName>
-%%   <field name="KeyField">...</field>
-%%   <field name="...">...</field>
+%%   <KeyField>...</KeyField>
+%%   <Field2>...</Field2>
 %%   ...
 %% </ElementName>
 %% ...
-docs_from_file(File, ElementName, KeyField) ->
-    {ok, Bin} = file:read_file(File),
-    docs_from_bin(Bin, ElementName, KeyField).
+
+read_file_utf8(File) ->
+    {ok, F} = file:open(File, [read,binary,{encoding,utf8}]),
+    read_file_utf8(F, io:get_chars(F, '', ?MB), <<>>).
+
+read_file_utf8(F, eof, Acc) ->
+    file:close(F),
+    Acc;
+read_file_utf8(F, Bin, Acc) ->
+    read_file_utf8(F, io:get_chars(F, '', ?MB), <<Acc/binary,Bin/binary>>).
+
+load_dir(Dir, ElementName, KeyField) ->
+    [File|Rest] = filelib:wildcard(filename:join([Dir, "*"])),
+    Bin = read_file_utf8(File),
+    Cache = docs_from_bin(Bin, ElementName, KeyField),
+    {Cache, Rest}.
+
+read_entry(_Op, {[KeyVal|Rest], Files}, _, _) ->
+    {KeyVal, {Rest, Files}};
+
+read_entry(_Op, {[], [File|Rest]}, ElementName, KeyField) ->
+    Bin = read_file_utf8(File),
+    Cache = docs_from_bin(Bin, ElementName, KeyField),
+    read_entry(_Op, {Cache, Rest}, ElementName, KeyField);
+
+read_entry(_Op, {[], []}, _, _) ->
+    timer:sleep(1000),
+    finished.
+
+docs_from_bin(<<>>, _, _) ->
+    [];
 
 docs_from_bin(Bin, ElementName, KeyField) when is_binary(ElementName),
                                                is_binary(KeyField) ->
     Size = size(ElementName),
-    Chunks = binary:split(Bin, <<"</",ElementName:Size/binary,">\n">>, [global]),
-    [ key_value(strip_start(Chunk, ElementName), KeyField) || Chunk <- Chunks].
+    Pat = <<"</",ElementName:Size/binary,">\n">>,
+    Chunks = binary:split(Bin, Pat, [global]),
+    [ key_value(add_end(Chunk, ElementName), KeyField)
+      || Chunk <- Chunks, Chunk /= <<"">>].
 
 key_value(Chunk, KeyField) ->
     Size = size(KeyField),
-    Pat = <<"<field name=\"",KeyField:Size/binary,"\">(.*)</field>">>,
+    Pat = <<"<",KeyField:Size/binary,">(.*)</",KeyField:Size/binary,">">>,
     {match, [Key]} = re:run(Chunk, Pat, [{capture, [1], binary}]),
     {Key, Chunk}.
 
-strip_start(Chunk, ElementName) ->
-    Size = size(ElementName),
-    <<"<",ElementName:Size/binary,">\n",Rest/binary>> = Chunk,
-    Rest.
+add_end(Chunk, ElementName) ->
+    <<Chunk/binary,"</",ElementName/binary,">\n">>.
