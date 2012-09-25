@@ -8,11 +8,11 @@
 # contains the body and close the post tag.
 /From .* at/ {
                       i\
-<body>
+<body><![CDATA[
                       x
                       p
                       i\
-</body>\
+]]></body>\
 </post>
                       x
                       s/From .* at .*//
@@ -24,33 +24,33 @@
 /^From: (.*) at (.*) \(.*\)$/ {
         i\
 <post>
-        s::<field name="author">\1@\2</field>:
+        s::<author>\1@\2</author>:
         b break
         }
 
 # Following are various email headers.
 /^Date: (.*)$/ {
-        s::<field name="date">\1</field>:
+        s::<date>\1</date>:
         b break
         }
 
 /^Subject: (.*)$/ {
-        s::<field name="subject">\1</field>:
+        s::<subject><![CDATA[\1]]></subject>:
         b break
         }
 
 /^In-Reply-To: <(.*)>$/ {
-        s::<field name="in_reply_to">\1</field>:
+        s::<in_reply_to>\1</in_reply_to>:
         b break
         }
 
 /^References\: <(.*)>$/ {
-        s::<field name="references">\1</field>:
+        s::<references>\1</references>:
         b break
         }
 
 /^Message-ID: <(.*)>$/ {
-        s::<field name="message_id">\1</field>:
+        s::<message_id>\1</message_id>:
         b break
         }
 
