@@ -25,6 +25,7 @@ read_file_utf8(F, Bin, Acc) ->
 
 load_dir(Dir, ElementName, KeyField) ->
     [File|Rest] = filelib:wildcard(filename:join([Dir, "*"])),
+    io:format("FILE: ~p~n", [File]),
     Bin = read_file_utf8(File),
     Cache = docs_from_bin(Bin, ElementName, KeyField),
     {Cache, Rest}.
@@ -33,6 +34,7 @@ read_entry(_Op, {[KeyVal|Rest], Files}, _, _) ->
     {KeyVal, {Rest, Files}};
 
 read_entry(_Op, {[], [File|Rest]}, ElementName, KeyField) ->
+    io:format("FILE: ~p~n", [File]),
     Bin = read_file_utf8(File),
     Cache = docs_from_bin(Bin, ElementName, KeyField),
     read_entry(_Op, {Cache, Rest}, ElementName, KeyField);
@@ -49,12 +51,14 @@ docs_from_bin(Bin, ElementName, KeyField) when is_binary(ElementName),
     Size = size(ElementName),
     Pat = <<"</",ElementName:Size/binary,">\n">>,
     Chunks = binary:split(Bin, Pat, [global]),
+    io:format("# OF CHUNKS: ~p~n", [length(Chunks)]),
     [ key_value(add_end(Chunk, ElementName), KeyField)
       || Chunk <- Chunks, Chunk /= <<"">>].
 
 key_value(Chunk, KeyField) ->
     Size = size(KeyField),
     Pat = <<"<",KeyField:Size/binary,">(.*)</",KeyField:Size/binary,">">>,
+    %% io:format("pat ~p in chunk ~p~n", [Pat, Chunk]),
     {match, [Key]} = re:run(Chunk, Pat, [{capture, [1], binary}]),
     {Key, Chunk}.
 
