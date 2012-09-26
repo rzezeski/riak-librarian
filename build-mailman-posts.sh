@@ -24,7 +24,8 @@ for name in $archives; do
 
     wget -P $tmpdir $archive_url
     gunzip $file
-    ./mailman-to-xml.sed $txt > $xml
+    gawk -f mailman.awk $txt > $xml
+    # ./mailman-to-xml.sed $txt > $xml
     rm $txt
 done
 
