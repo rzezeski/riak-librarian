@@ -1,6 +1,5 @@
 BEGIN {
     body="f"
-    references="f"
     last_header="none"
 }
 
@@ -52,8 +51,6 @@ body == "t" && last_header == "none" {
 
     gsub(/[<>]/, "", $0)
     gsub(/References: /, "<references_ws>", $0)
-    # tmp=gensub(/^References: (.*)/, "<references_ws>\\1", $0)
-    # print gensub(/[<>]/, "", "g", tmp)
     printf "%s", $0
     references="t"
     last_header="</references_ws>"
@@ -66,10 +63,6 @@ body == "t" && last_header == "none" {
         last_header="none"
     }
 
-    # if (references == "t") {
-    #     printf "</references_ws>\n"
-    #     references="f"
-    # }
     print gensub(/^Message-ID: <(.*)>.*/, "<message_id_s>\\1</message_id_s>", $0)
 
     printf "<body_t><![CDATA["
@@ -81,8 +74,6 @@ last_header == "</references_ws>" && body == "f" {
     gsub(/[\t]/, " ", $0)
     gsub(/[\t<>]/, "", $0)
     printf "%s", $0
-    # print gensub(/[\t <>]/, "", "g", $0)
-    # printf "%s", gensub(/[\t ]*<(.*)>.*/, " \\1", $0)9
     next
 
 }
@@ -91,13 +82,6 @@ last_header == "]]></subject_t>" && body == "f" {
     print
     next
 }
-
-# body == "f" {
-#     printf "<body_t><![CDATA[%s", $0
-#     body="t"
-#     next
-# }
-
 
 END {
     printf "]]></body_t>\n</post>\n"
