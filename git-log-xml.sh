@@ -36,4 +36,4 @@ do
     shift
 done
 
-git $GIT_OPTS log --pretty=format:'<commit>%n<hash>%h</hash>%n<author>%an</author>%n<date>%ai</date>%n<subject_body><![CDATA[%s%n%b]]></subject_body>%n</commit>'
+git $GIT_OPTS log --pretty=format:'<commit>%n<hash_s>%h</hash_s>%n<author_ws>%an</author_ws>%n<date_ig>%ai</date_ig>%n<subject_body_t><![CDATA[%s%n%b]]></subject_body_t>%n</commit>'
