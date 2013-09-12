@@ -23,14 +23,19 @@ mkdir -p $DIR
 
 while read url; do
     name=$(repo_name $url)
-    tmpdir=$(mktemp -d $name-XXXX)
-    # pushd $tmpdir
-    echo "Cloning $name @ $url under dir $tmpdir"
-    git clone $url $tmpdir
+    repo_dir=/tmp/$name
+    if [ ! -e $repo_dir ]; then
+        echo "Cloning $name @ $url under dir $repo_dir"
+        git clone $url $repo_dir
+    else
+        echo "Pull latest of $name @ $url under dir $repo_dir"
+        pushd $repo_dir
+        git pull
+        popd
+    fi
     logfile=$DIR/$name-commit-log.xml
     echo "Generating commit log $logfile"
-    $RL_DIR/git-log-xml.sh -d $tmpdir > $logfile
-    # popd
+    $RL_DIR/git-log-xml.sh -d $repo_dir > $logfile
     rm -rf $tmpdir
 done
 
