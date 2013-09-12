@@ -42,5 +42,5 @@ done
 REPO_NAME=$(basename $DIR)
 
 # TODO: convert time to UTC, right now just pretending local is UTC
-git $GIT_OPTS log --pretty=format:"<commit>%n<repo_s>$REPO_NAME</repo_s>%n<hash_s>%H</hash_s>%n<author_s>%an</author_s>%n<author_dt>%at</author_dt>%n<committer_dt>%ct</committer_dt>%n<subject_body_tsd><![CDATA[%s%n%b]]></subject_body_tsd>%n</commit>" \
-    | gawk 'match($0, /(<.*_dt>)(.*)(<.*_dt>)/, x) { printf("%s%s%s\n", x[1], strftime("%Y-%m-%dT%H:%M:%SZ", x[2]), x[3]); next; } { print $0 }'
+git $GIT_OPTS log --pretty=format:"<commit>%n<repo>$REPO_NAME</repo>%n<hash>%H</hash>%n<author>%an</author>%n<dt>%ct</dt>%n<subject><![CDATA[%s]]></subject>%n<body><![CDATA[%b]]></body>%n</commit>" \
+    | gawk 'match($0, /(<dt>)(.*)(<.*dt>)/, x) { printf("%s%s%s\n", x[1], strftime("%Y-%m-%dT%H:%M:%SZ", x[2]), x[3]); next; } { print $0 }'
