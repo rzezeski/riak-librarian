@@ -66,13 +66,20 @@ section == "headers" && match($0, /^From: (.*)/, m) {
 }
 
 # Extract the date.
-#
-# TODO: convert to style Solr accepts.
 section == "headers" && match($0, /^Date: (.*).*/, m) {
-    printf "<date>%s</date>\n", m[1]
+    # Remove day abbrev if present
+    gsub(/[a-zA-Z]{3}, /, "", m[1])
+
+    # Remove TZ abbrev if present
+    gsub(/ \([A-Z]{3}\)/, "", m[1])
+
+    if ( ("date -j -u -f '%e %b %Y %H:%M:%S %z' '" m[1] "' '+%Y-%m-%dT%H:%M:%SZ'" | getline iso) > 0) {
+        printf "<date>%s</date>\n", iso
+    } else {
+        printf("ERROR: failed to parse date '%s'\n", m[1]) > "/dev/stderr"
+    }
     next
 }
-
 
 # Extract the message id.
 section == "headers" && match($0, /^Message-ID: <(.*)>.*/, m) {
