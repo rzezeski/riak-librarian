@@ -22,9 +22,11 @@ for name in $archives; do
     txt=${file%.gz}
     xml="${txt%.txt}.xml"
 
-    wget -P $tmpdir $archive_url
+    if [ ! -e $file ]; then
+        wget -P $tmpdir $archive_url
+    fi
     gunzip $file
-    gawk -f mailman.awk $txt > $xml
+    gawk -f mbox-to-xml.awk $txt > $xml
     rm $txt
 done
 

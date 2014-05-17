@@ -4,7 +4,7 @@ git://github.com/basho/basho_stats.git
 git://github.com/basho/bitcask.git
 git://github.com/basho/cluster_info.git
 git://github.com/basho/ebloom.git
-git://github.com/basho/eleveldb.git.git
+git://github.com/basho/eleveldb.git
 git://github.com/basho/eper.git
 git://github.com/basho/erlang_js.git
 git://github.com/basho/lager.git

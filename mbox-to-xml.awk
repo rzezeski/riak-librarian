@@ -6,6 +6,7 @@ BEGIN {
     boundary = ""
     current_header = "none"
     end_tag = ""
+    num_msgs = 0
     section = "headers"
 }
 
@@ -15,8 +16,10 @@ BEGIN {
         # This is not the frist message and thus a previous message
         # has completed.
         printf "]]></body>\n</msg>\n"
+        num_msgs += 1
     }
-    section="headers"
+    boundary = ""
+    section = "headers"
     printf "<msg>\n"
     next
 }
@@ -67,17 +70,24 @@ section == "headers" && match($0, /^From: (.*)/, m) {
 
 # Extract the date.
 section == "headers" && match($0, /^Date: (.*).*/, m) {
+    # NOTE: I tried to be cute and convert dates to UTC here but
+    # forking `date` this much just causes issues and runs
+    # slow. Instead will use Solr's ParseDateFieldUpdateProcessorFactory.
+
     # Remove day abbrev if present
-    gsub(/[a-zA-Z]{3}, /, "", m[1])
+    # gsub(/[a-zA-Z]{3}, +/, "", m[1])
 
-    # Remove TZ abbrev if present
-    gsub(/ \([A-Z]{3}\)/, "", m[1])
+    # # Remove TZ abbrev if present
+    # gsub(/ \([A-Z]{3,4}\)/, "", m[1])
 
-    if ( ("date -j -u -f '%e %b %Y %H:%M:%S %z' '" m[1] "' '+%Y-%m-%dT%H:%M:%SZ'" | getline iso) > 0) {
-        printf "<date>%s</date>\n", iso
-    } else {
-        printf("ERROR: failed to parse date '%s'\n", m[1]) > "/dev/stderr"
-    }
+    # if ( ("date -j -u -f '%e %b %Y %H:%M:%S %z' '" m[1] "' '+%Y-%m-%dT%H:%M:%SZ'" | getline iso) > 0) {
+    #     printf "<date>%s</date>\n", iso
+    # } else {
+    #     printf("ERROR: failed to parse date '%s'\n", m[1]) > "/dev/stderr"
+    # }
+    # next
+
+    printf "<date>%s</date>\n", m[1]
     next
 }
 
@@ -152,4 +162,9 @@ section == "body" || section == "multipart-body" {
     gsub(/[\x01\x02\x03\x04\x05\x06\x07\x08\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F]/, "", $0)
     print
     next
+}
+
+END {
+    printf "]]></body>\n</msg>\n"
+    printf "Messages transformed: %d\n", num_msgs > "/dev/stderr"
 }
